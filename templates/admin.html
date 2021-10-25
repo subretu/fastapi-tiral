@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+<br>
+<h2>Administrator page</h2>
+<hr>
+<p>Hi, {{ user[0][1] }}.</p>
+
+<br>
+<table class="table">
+    <thead class="table-dark">
+    <tr>
+        <th>#</th>
+        <th>内容</th>
+        <th>締め切り</th>
+        <th>掲載日</th>
+        <th>終了</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for t in task %}
+    <tr>
+        <td>{{ t[0] }}</td>
+        <td>{{ t[1] }}</td>
+        <td>{{ t[3] }}</td>
+        <td>{{ t[4] }}</td>
+        <td>{% if t[5] %}
+            <div class="text-success">済</div>
+            {% else %}
+            <div class="text-danger">未</div>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
