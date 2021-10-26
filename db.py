@@ -4,6 +4,7 @@ import os
 
 # DB接続用関数
 def get_connection():
+
     user = os.getenv("POSTGRES_USER", None)
     pwd = os.getenv("POSTGRES_PASS", None)
     server = os.getenv("POSTGRES_HOST", None)
