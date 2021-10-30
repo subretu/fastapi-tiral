@@ -5,7 +5,7 @@ def read_user(cur, user):
 
 
 def read_task(cur, user_id):
-    cur.execute(f"select * from public.task where user_id = {user_id[0]};")
+    cur.execute(f"select * from public.task where user_id = '{user_id[0]}';")
     rows = cur.fetchall()
     return rows
 

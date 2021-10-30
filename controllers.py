@@ -5,11 +5,16 @@ from starlette.requests import Request
 from starlette.status import HTTP_401_UNAUTHORIZED
 from model import read_task, read_user, insert_user
 import db
-import re  # new
+import re
+from mycalendar import MyCalendar
+from datetime import datetime, timedelta
 
-pattern = re.compile(r'\w{4,20}')  # 任意の4~20の英数字を示す正規表現
-pattern_pw = re.compile(r'\w{6,20}')  # 任意の6~20の英数字を示す正規表現
-pattern_mail = re.compile(r'^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$')  # e-mailの正規表現
+
+pattern = re.compile(r"\w{4,20}")  # 任意の4~20の英数字を示す正規表現
+pattern_pw = re.compile(r"\w{6,20}")  # 任意の6~20の英数字を示す正規表現
+pattern_mail = re.compile(
+    r"^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$"
+)  # e-mailの正規表現
 
 app = FastAPI(
     version="0.9 beta",
@@ -32,8 +37,12 @@ def admin(request: Request, credentials: HTTPBasicCredentials = Depends(security
     username = credentials.username
     password = credentials.password
 
+    today = datetime.now()
+    next_w = today + timedelta(days=7)  # １週間後の日付
+
     # ユーザとタスクを取得
-    cur = db.get_connection()
+    conn = db.get_connection()
+    cur = conn.cursor()
     user = read_user(cur, username)
     task = read_task(cur, user[0])
     cur.close()
@@ -47,8 +56,28 @@ def admin(request: Request, credentials: HTTPBasicCredentials = Depends(security
             headers={"WWW-Authenticate": "Basic"},
         )
 
+    # カレンダーをHTML形式で取得
+    cal = MyCalendar(
+        username, {t[3].strftime("%Y%m%d"): t[5] for t in task}
+    )  # 予定がある日付をキーとして渡す
+
+    cal = cal.formatyear(today.year, 4)  # カレンダーをHTMLで取得
+
+    # 直近のタスクだけでいいので、リストを書き換える
+    task = [t for t in task if today <= t[3] <= next_w]
+    links = [
+        t[3].strftime("/todo/" + username + "/%Y/%m/%d") for t in task
+    ]  # 直近の予定リンク
+
     return templates.TemplateResponse(
-        "admin.html", {"request": request, "user": user, "task": task}
+        "admin.html",
+        {
+            "request": request,
+            "user": user,
+            "task": task,
+            "links": links,
+            "calender": cal,
+        },
     )
 
 
