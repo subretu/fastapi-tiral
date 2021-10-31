@@ -8,6 +8,8 @@ import db
 import re
 from mycalendar import MyCalendar
 from datetime import datetime, timedelta
+from auth import auth
+from starlette.responses import RedirectResponse
 
 
 pattern = re.compile(r"\w{4,20}")  # 任意の4~20の英数字を示す正規表現
@@ -33,12 +35,8 @@ def index(request: Request):
 
 
 def admin(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
-    # Basic認証で受け取った情報
-    username = credentials.username
-    password = credentials.password
 
-    today = datetime.now()
-    next_w = today + timedelta(days=7)  # １週間後の日付
+    username = auth(credentials)
 
     # ユーザとタスクを取得
     conn = db.get_connection()
@@ -46,15 +44,10 @@ def admin(request: Request, credentials: HTTPBasicCredentials = Depends(security
     user = read_user(cur, username)
     task = read_task(cur, user[0])
     cur.close()
+    conn.close()
 
-    # 該当ユーザがいない場合
-    if user == [] or user[0][2] != password:
-        error = "ユーザ名かパスワードが間違っています"
-        raise HTTPException(
-            status_code=HTTP_401_UNAUTHORIZED,
-            detail=error,
-            headers={"WWW-Authenticate": "Basic"},
-        )
+    today = datetime.now()
+    next_w = today + timedelta(days=7)  # １週間後の日付
 
     # カレンダーをHTML形式で取得
     cal = MyCalendar(
@@ -65,9 +58,7 @@ def admin(request: Request, credentials: HTTPBasicCredentials = Depends(security
 
     # 直近のタスクだけでいいので、リストを書き換える
     task = [t for t in task if today <= t[3] <= next_w]
-    links = [
-        t[3].strftime("/todo/" + username + "/%Y/%m/%d") for t in task
-    ]  # 直近の予定リンク
+    links = [t[3].strftime("/todo/" + username + "/%Y/%m/%d") for t in task]  # 直近の予定リンク
 
     return templates.TemplateResponse(
         "admin.html",
@@ -102,7 +93,7 @@ async def register(request: Request):
         conn = db.get_connection()
         cur = conn.cursor()
 
-        # ユーザとタスクを取得
+        # ユーザ-を取得
         user = read_user(cur, username)
 
         # 怒涛のエラー処理
@@ -132,3 +123,24 @@ async def register(request: Request):
         return templates.TemplateResponse(
             "complete.html", {"request": request, "username": username}
         )
+
+
+def detail(request: Request, username, year, month, day):
+
+    """ URLパターンは引数で取得可能 """
+    # 認証OK？
+    username_tmp = auth(credentials)
+
+    if username_tmp != username:  # もし他のユーザが訪問してきたらはじく
+        return RedirectResponse("/")
+
+    return templates.TemplateResponse(
+        "detail.html",
+        {
+            "request": request,
+            "username": username,
+            "year": year,
+            "month": month,
+            "day": day,
+        },
+    )

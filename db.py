@@ -9,6 +9,7 @@ def get_connection():
     server = os.getenv("POSTGRES_HOST", None)
     port = os.getenv("POSTGRES_HOST", None)
     db = os.getenv("POSTGRES_PORT", None)
+
     con = psycopg2.connect(
         "host="
         + server
