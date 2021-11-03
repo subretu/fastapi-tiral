@@ -3,7 +3,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette.templating import Jinja2Templates
 from starlette.requests import Request
 from starlette.status import HTTP_401_UNAUTHORIZED
-from model import read_task, read_user, insert_user
+from model import read_task, read_user, insert_user, read_task2
 import db
 import re
 from mycalendar import MyCalendar
@@ -31,6 +31,7 @@ jinja_env = templates.env
 
 
 def index(request: Request):
+
     return templates.TemplateResponse("index.html", {"request": request})
 
 
@@ -125,20 +126,40 @@ async def register(request: Request):
         )
 
 
-def detail(request: Request, username, year, month, day):
+def detail(
+    request: Request,
+    username,
+    year,
+    month,
+    day,
+    credentials: HTTPBasicCredentials = Depends(security),
+):
 
-    """ URLパターンは引数で取得可能 """
+    """URLパターンは引数で取得可能"""
     # 認証OK？
     username_tmp = auth(credentials)
 
-    if username_tmp != username:  # もし他のユーザが訪問してきたらはじく
+    # もし他のユーザが訪問してきたらはじく
+    if username_tmp != username:
         return RedirectResponse("/")
+
+    # ユーザとタスクを取得
+    conn = db.get_connection()
+    cur = conn.cursor()
+    user = read_user(cur, username)
+    # 該当の日付と一致するものだけのリストにする
+    deadline_date = "{}-{}-{}".format(year, month.zfill(2), day.zfill(2))
+    task = read_task2(cur, user[0], deadline_date)
+
+    cur.close()
+    conn.close()
 
     return templates.TemplateResponse(
         "detail.html",
         {
             "request": request,
             "username": username,
+            "task": task,
             "year": year,
             "month": month,
             "day": day,
