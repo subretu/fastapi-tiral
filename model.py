@@ -23,3 +23,12 @@ def insert_user(conn, cur, user_data):
         f"insert into public.user (username, password, mal) values ('{user_data[0]}', '{user_data[1]}', '{user_data[2]}');"
     )
     conn.commit()
+
+
+def update_tsak(conn, cur, task_id):
+    # 先にSQL文を作ってexecuteの方がクエリ実行が1回なのでいいかもしれない
+    for id in task_id:
+        cur.execute(
+            f"update public.task set done = True where id = '{id}';"
+        )
+    conn.commit()

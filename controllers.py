@@ -3,7 +3,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette.templating import Jinja2Templates
 from starlette.requests import Request
 from starlette.status import HTTP_401_UNAUTHORIZED
-from model import read_task, read_user, insert_user, read_task2
+from model import read_task, read_user, insert_user, read_task2, update_tsak
 import db
 import re
 from mycalendar import MyCalendar
@@ -135,7 +135,6 @@ def detail(
     credentials: HTTPBasicCredentials = Depends(security),
 ):
 
-    """URLパターンは引数で取得可能"""
     # 認証OK？
     username_tmp = auth(credentials)
 
@@ -143,7 +142,7 @@ def detail(
     if username_tmp != username:
         return RedirectResponse("/")
 
-    # ユーザとタスクを取得
+    # ユーザを取得
     conn = db.get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
@@ -165,3 +164,34 @@ def detail(
             "day": day,
         },
     )
+
+
+async def done(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
+    # 認証OK？
+    username = auth(credentials)
+
+    # ユーザとタスクを取得
+    conn = db.get_connection()
+    cur = conn.cursor()
+    user = read_user(cur, username)
+    task = read_task(cur, user[0])
+
+    # フォームで受け取ったタスクの終了判定を見て内容を変更する
+    data = await request.form()
+    t_dones = data.getlist('done[]')
+
+    task_done_id = []
+    for t in task:
+        if str(t[0]) in t_dones:  # もしIDが一致すれば "終了した予定" とする
+            task_done_id.append(t[0])
+
+    # 予定を終了する
+    if task_done_id != []:
+        update_tsak(conn, cur, task_done_id)
+
+    cur.close()
+    conn.close()
+
+
+    # 管理者トップへリダイレクト
+    return RedirectResponse('/admin')
