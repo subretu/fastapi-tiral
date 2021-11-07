@@ -28,7 +28,12 @@ def insert_user(conn, cur, user_data):
 def update_tsak(conn, cur, task_id):
     # 先にSQL文を作ってexecuteの方がクエリ実行が1回なのでいいかもしれない
     for id in task_id:
-        cur.execute(
-            f"update public.task set done = True where id = '{id}';"
-        )
+        cur.execute(f"update public.task set done = True where id = {id};")
+    conn.commit()
+
+
+def add_tsak(conn, cur, user_id, content, deadline, now_time):
+    cur.execute(
+        f"insert into public.task (user_id, content, deadline, date, done) values ('{user_id[0]}', '{content}', '{deadline}','{now_time}', false);"
+    )
     conn.commit()

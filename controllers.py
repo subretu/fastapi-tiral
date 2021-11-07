@@ -3,7 +3,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette.templating import Jinja2Templates
 from starlette.requests import Request
 from starlette.status import HTTP_401_UNAUTHORIZED
-from model import read_task, read_user, insert_user, read_task2, update_tsak
+from model import read_task, read_user, insert_user, read_task2, update_tsak, add_tsak
 import db
 import re
 from mycalendar import MyCalendar
@@ -178,7 +178,7 @@ async def done(request: Request, credentials: HTTPBasicCredentials = Depends(sec
 
     # フォームで受け取ったタスクの終了判定を見て内容を変更する
     data = await request.form()
-    t_dones = data.getlist('done[]')
+    t_dones = data.getlist("done[]")
 
     task_done_id = []
     for t in task:
@@ -192,6 +192,41 @@ async def done(request: Request, credentials: HTTPBasicCredentials = Depends(sec
     cur.close()
     conn.close()
 
-
     # 管理者トップへリダイレクト
-    return RedirectResponse('/admin')
+    return RedirectResponse("/admin")
+
+
+async def add(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
+    # 認証
+    username = auth(credentials)
+
+    # ユーザとタスクを取得
+    conn = db.get_connection()
+    cur = conn.cursor()
+    user = read_user(cur, username)
+
+    # フォームからデータを取得
+    data = await request.form()
+    year = int(data["year"])
+    month = int(data["month"])
+    day = int(data["day"])
+    hour = int(data["hour"])
+    minute = int(data["minute"])
+
+    deadline = "{}-{}-{} {}:{}:{}".format(
+        year,
+        str(month).zfill(2),
+        str(day).zfill(2),
+        str(hour).zfill(2),
+        str(minute).zfill(2),
+        "00",
+    )
+    now_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # 新しくタスクを生成しコミット
+    add_tsak(conn, cur, user[0], data["content"], deadline, now_time)
+
+    cur.close()
+    conn.close()
+
+    return RedirectResponse("/admin")
