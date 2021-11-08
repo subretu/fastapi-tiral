@@ -3,7 +3,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette.templating import Jinja2Templates
 from starlette.requests import Request
 from starlette.status import HTTP_401_UNAUTHORIZED
-from model import read_task, read_user, insert_user, read_task2, update_tsak, add_tsak
+from model import read_task, read_user, insert_user, read_task2, update_tsak, add_task, delete_task, read_task3
 import db
 import re
 from mycalendar import MyCalendar
@@ -200,7 +200,7 @@ async def add(request: Request, credentials: HTTPBasicCredentials = Depends(secu
     # 認証
     username = auth(credentials)
 
-    # ユーザとタスクを取得
+    # ユーザーを取得
     conn = db.get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
@@ -224,9 +224,32 @@ async def add(request: Request, credentials: HTTPBasicCredentials = Depends(secu
     now_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # 新しくタスクを生成しコミット
-    add_tsak(conn, cur, user[0], data["content"], deadline, now_time)
+    add_task(conn, cur, user[0], data["content"], deadline, now_time)
 
     cur.close()
     conn.close()
 
     return RedirectResponse("/admin")
+
+
+def delete(request: Request, t_id, credentials: HTTPBasicCredentials = Depends(security)):
+    # 認証
+    username = auth(credentials)
+
+    # ユーザーとタスクを取得
+    conn = db.get_connection()
+    cur = conn.cursor()
+    user = read_user(cur, username)
+    task = read_task3(cur, t_id)
+
+    # もしユーザIDが異なれば削除せずリダイレクト
+    if task[0][1] != str(user[0][0]):
+        return RedirectResponse('/admin')
+
+    # 該当のタスクを削除しコミット
+    delete_task(conn, cur, t_id)
+
+    cur.close()
+    conn.close()
+
+    return RedirectResponse('/admin')

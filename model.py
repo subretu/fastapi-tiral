@@ -18,6 +18,14 @@ def read_task2(cur, user_id, deadline_date):
     return rows
 
 
+def read_task3(cur, task_id):
+    cur.execute(
+        f"select * from public.task where id = {task_id};"
+    )
+    rows = cur.fetchall()
+    return rows
+
+
 def insert_user(conn, cur, user_data):
     cur.execute(
         f"insert into public.user (username, password, mal) values ('{user_data[0]}', '{user_data[1]}', '{user_data[2]}');"
@@ -32,8 +40,15 @@ def update_tsak(conn, cur, task_id):
     conn.commit()
 
 
-def add_tsak(conn, cur, user_id, content, deadline, now_time):
+def add_task(conn, cur, user_id, content, deadline, now_time):
     cur.execute(
         f"insert into public.task (user_id, content, deadline, date, done) values ('{user_id[0]}', '{content}', '{deadline}','{now_time}', false);"
+    )
+    conn.commit()
+
+
+def delete_task(conn, cur, t_id):
+    cur.execute(
+        f"delete from public.task where id = {t_id} ;"
     )
     conn.commit()
