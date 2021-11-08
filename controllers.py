@@ -3,13 +3,23 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette.templating import Jinja2Templates
 from starlette.requests import Request
 from starlette.status import HTTP_401_UNAUTHORIZED
-from model import read_task, read_user, insert_user, read_task2, update_tsak, add_task, delete_task, read_task3
+from model import (
+    read_task,
+    read_user,
+    insert_user,
+    read_task2,
+    update_tsak,
+    add_task,
+    delete_task,
+    read_task3,
+)
 import db
 import re
 from mycalendar import MyCalendar
 from datetime import datetime, timedelta
 from auth import auth
 from starlette.responses import RedirectResponse
+import json
 
 
 pattern = re.compile(r"\w{4,20}")  # 任意の4~20の英数字を示す正規表現
@@ -232,7 +242,9 @@ async def add(request: Request, credentials: HTTPBasicCredentials = Depends(secu
     return RedirectResponse("/admin")
 
 
-def delete(request: Request, t_id, credentials: HTTPBasicCredentials = Depends(security)):
+def delete(
+    request: Request, t_id, credentials: HTTPBasicCredentials = Depends(security)
+):
     # 認証
     username = auth(credentials)
 
@@ -244,7 +256,7 @@ def delete(request: Request, t_id, credentials: HTTPBasicCredentials = Depends(s
 
     # もしユーザIDが異なれば削除せずリダイレクト
     if task[0][1] != str(user[0][0]):
-        return RedirectResponse('/admin')
+        return RedirectResponse("/admin")
 
     # 該当のタスクを削除しコミット
     delete_task(conn, cur, t_id)
@@ -252,4 +264,38 @@ def delete(request: Request, t_id, credentials: HTTPBasicCredentials = Depends(s
     cur.close()
     conn.close()
 
-    return RedirectResponse('/admin')
+    return RedirectResponse("/admin")
+
+
+def get(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
+    # 認証
+    username = auth(credentials)
+
+    # ユーザーとタスクを取得
+    conn = db.get_connection()
+    cur = conn.cursor()
+    user = read_user(cur, username)
+    task = read_task(cur, user[0])
+
+    cur.close()
+    conn.close()
+
+    # タスク一覧をjson形式に変換
+    task_json = []
+
+    for t in task:
+        param = {
+                "id": t[0],
+                "user_id": t[1],
+                "content": t[2],
+                "deadline": t[3].strftime("%Y-%m-%d %H:%M:%S"),
+                "published": t[4].strftime("%Y-%m-%d %H:%M:%S"),
+                "done": t[5],
+                }
+        task_json.append(param)
+
+    # json文字列の作成
+    jsonStr = json.dumps(task_json, ensure_ascii=False)
+    # Pythonオブジェクトに変換して返す
+    # task_jsonと同様なのでわざわざ上でjson文字列に変換する必要はなかったのかも
+    return json.loads(jsonStr)

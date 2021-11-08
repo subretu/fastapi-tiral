@@ -22,3 +22,7 @@ app.add_api_route('/add', add, methods=['POST'])
 
 # 予定を削除
 app.add_api_route('/delete/{t_id}', delete)
+
+
+# JSONで返すAPI
+app.add_api_route('/get', get)
