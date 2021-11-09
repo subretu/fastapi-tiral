@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, Form
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette.templating import Jinja2Templates
 from starlette.requests import Request
@@ -12,6 +12,7 @@ from model import (
     add_task,
     delete_task,
     read_task3,
+    get_new_task
 )
 import db
 import re
@@ -285,17 +286,71 @@ def get(request: Request, credentials: HTTPBasicCredentials = Depends(security))
 
     for t in task:
         param = {
-                "id": t[0],
-                "user_id": t[1],
-                "content": t[2],
-                "deadline": t[3].strftime("%Y-%m-%d %H:%M:%S"),
-                "published": t[4].strftime("%Y-%m-%d %H:%M:%S"),
-                "done": t[5],
-                }
+            "id": t[0],
+            "user_id": t[1],
+            "content": t[2],
+            "deadline": t[3].strftime("%Y-%m-%d %H:%M:%S"),
+            "published": t[4].strftime("%Y-%m-%d %H:%M:%S"),
+            "done": t[5],
+        }
         task_json.append(param)
 
     # json文字列の作成
     jsonStr = json.dumps(task_json, ensure_ascii=False)
+
     # Pythonオブジェクトに変換して返す
     # task_jsonと同様なのでわざわざ上でjson文字列に変換する必要はなかったのかも
     return json.loads(jsonStr)
+
+
+async def insert(
+    request: Request,
+    content: str = Form(...),
+    deadline: str = Form(...),
+    credentials: HTTPBasicCredentials = Depends(security),
+):
+    """
+    タスクを追加してJSONで新規タスクを返す
+    """
+    # 認証
+    username = auth(credentials)
+
+    # ユーザーを取得
+    conn = db.get_connection()
+    cur = conn.cursor()
+    user = read_user(cur, username)
+
+    try:
+        # タスクを追加
+        now_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        add_task(conn, cur, user[0], content, deadline, now_time)
+
+        # テーブルから新しく追加したタスクを取得する
+        new_task = get_new_task(cur, user[0])
+
+        cur.close()
+        conn.close()
+
+        task_json = []
+        # タスク一覧をjson形式に変換
+        param = {
+            "id": new_task[0][0],
+            "content": new_task[0][2],
+            "deadline": new_task[0][3].strftime("%Y-%m-%d %H:%M:%S"),
+            "published": new_task[0][4].strftime("%Y-%m-%d %H:%M:%S"),
+            "done": new_task[0][5],
+        }
+        task_json.append(param)
+
+        # json文字列の作成
+        jsonStr = json.dumps(task_json, ensure_ascii=False)
+
+        # Pythonオブジェクトに変換して返す
+        # task_jsonと同様なのでわざわざ上でjson文字列に変換する必要はなかったのかも
+        return json.loads(jsonStr)
+
+    except Exception as e:
+
+        print('=== エラー内容 ===')
+        print('type:' + str(type(e)))
+        print('エラー:' + str(e))

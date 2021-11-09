@@ -52,3 +52,11 @@ def delete_task(conn, cur, t_id):
         f"delete from public.task where id = {t_id} ;"
     )
     conn.commit()
+
+
+def get_new_task(cur, user_id):
+    cur.execute(
+        f"select * from public.task where user_id = '{user_id[0]}' order by id desc limit 1;"
+    )
+    rows = cur.fetchall()
+    return rows
