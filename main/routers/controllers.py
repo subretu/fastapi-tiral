@@ -1,8 +1,7 @@
-from fastapi import FastAPI, Depends, Form
+from fastapi import Depends, Form
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette.templating import Jinja2Templates
 from starlette.requests import Request
-from starlette.status import HTTP_401_UNAUTHORIZED
 from main.model import (
     read_task,
     read_user,
@@ -12,7 +11,7 @@ from main.model import (
     add_task,
     delete_task,
     read_task3,
-    get_new_task
+    get_new_task,
 )
 from main.db import get_connection
 import re
@@ -53,7 +52,7 @@ def admin(request: Request, credentials: HTTPBasicCredentials = Depends(security
     username = auth(credentials)
 
     # ユーザとタスクを取得
-    conn =get_connection()
+    conn = get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
     task = read_task(cur, user[0])
@@ -106,7 +105,7 @@ async def register(request: Request):
 
         error = []
 
-        conn =get_connection()
+        conn = get_connection()
         cur = conn.cursor()
 
         # ユーザ-を取得
@@ -141,7 +140,7 @@ async def register(request: Request):
         )
 
 
-#@router.get("/todo/{username}/{year}/{month}/{day}")
+# @router.get("/todo/{username}/{year}/{month}/{day}")
 @router.get("/todo")
 def detail(
     request: Request,
@@ -160,7 +159,7 @@ def detail(
         return RedirectResponse("/")
 
     # ユーザを取得
-    conn =get_connection()
+    conn = get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
     # 該当の日付と一致するものだけのリストにする
@@ -189,7 +188,7 @@ async def done(request: Request, credentials: HTTPBasicCredentials = Depends(sec
     username = auth(credentials)
 
     # ユーザとタスクを取得
-    conn =get_connection()
+    conn = get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
     task = read_task(cur, user[0])
@@ -220,7 +219,7 @@ async def add(request: Request, credentials: HTTPBasicCredentials = Depends(secu
     username = auth(credentials)
 
     # ユーザーを取得
-    conn =get_connection()
+    conn = get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
 
@@ -259,7 +258,7 @@ def delete(
     username = auth(credentials)
 
     # ユーザーとタスクを取得
-    conn =get_connection()
+    conn = get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
     task = read_task3(cur, t_id)
@@ -283,7 +282,7 @@ def get(request: Request, credentials: HTTPBasicCredentials = Depends(security))
     username = auth(credentials)
 
     # ユーザーとタスクを取得
-    conn =get_connection()
+    conn = get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
     task = read_task(cur, user[0])
@@ -327,7 +326,7 @@ async def insert(
     username = auth(credentials)
 
     # ユーザーを取得
-    conn =get_connection()
+    conn = get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
 
@@ -362,6 +361,6 @@ async def insert(
 
     except Exception as e:
 
-        print('=== エラー内容 ===')
-        print('type:' + str(type(e)))
-        print('エラー:' + str(e))
+        print("=== エラー内容 ===")
+        print("type:" + str(type(e)))
+        print("エラー:" + str(e))

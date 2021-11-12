@@ -1,5 +1,7 @@
 import pytest
 import psycopg2
+import os
+
 
 # DB接続用関数
 def get_connection():

@@ -19,9 +19,7 @@ def read_task2(cur, user_id, deadline_date):
 
 
 def read_task3(cur, task_id):
-    cur.execute(
-        f"select * from public.task where id = {task_id};"
-    )
+    cur.execute(f"select * from public.task where id = {task_id};")
     rows = cur.fetchall()
     return rows
 
@@ -48,9 +46,7 @@ def add_task(conn, cur, user_id, content, deadline, now_time):
 
 
 def delete_task(conn, cur, t_id):
-    cur.execute(
-        f"delete from public.task where id = {t_id} ;"
-    )
+    cur.execute(f"delete from public.task where id = {t_id} ;")
     conn.commit()
 
 

@@ -1,7 +1,5 @@
 from starlette.testclient import TestClient
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from requests.auth import HTTPBasicAuth
-from fastapi import FastAPI, Security
+from fastapi.security import HTTPBasic
 from main.main import app
 
 
@@ -11,7 +9,7 @@ client = TestClient(app)
 
 
 def test_get(cursor):
-    #auth = HTTPBasicAuth(username="admin", password="hogehoge")
+    # auth = HTTPBasicAuth(username="admin", password="hogehoge")
     response = client.get("/get")
 
     print("以下、デバッグ")
@@ -24,10 +22,10 @@ def test_get(cursor):
 
     assert response.status_code == 200
     assert response.json() == {
-            "id": rows[0][0],
-            "user_id": rows[0][1],
-            "content": rows[0][2],
-            "deadline": rows[0][3].strftime("%Y-%m-%d %H:%M:%S"),
-            "published": rows[0][4].strftime("%Y-%m-%d %H:%M:%S"),
-            "done": rows[0][5],
-        }
+        "id": rows[0][0],
+        "user_id": rows[0][1],
+        "content": rows[0][2],
+        "deadline": rows[0][3].strftime("%Y-%m-%d %H:%M:%S"),
+        "published": rows[0][4].strftime("%Y-%m-%d %H:%M:%S"),
+        "done": rows[0][5],
+    }
