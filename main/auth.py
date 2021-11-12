@@ -1,5 +1,5 @@
-import db
-from model import read_user
+from main.db import get_connection
+from main.model import read_user
 from starlette.status import HTTP_401_UNAUTHORIZED
 from fastapi import HTTPException
 
@@ -11,7 +11,7 @@ def auth(credentials):
     password = credentials.password
 
     # ユーザとタスクを取得
-    conn = db.get_connection()
+    conn = get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
     cur.close()

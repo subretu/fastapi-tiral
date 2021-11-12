@@ -3,7 +3,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette.templating import Jinja2Templates
 from starlette.requests import Request
 from starlette.status import HTTP_401_UNAUTHORIZED
-from model import (
+from main.model import (
     read_task,
     read_user,
     insert_user,
@@ -14,24 +14,23 @@ from model import (
     read_task3,
     get_new_task
 )
-import db
+from main.db import get_connection
 import re
-from mycalendar import MyCalendar
+from main.mycalendar import MyCalendar
 from datetime import datetime, timedelta
-from auth import auth
+from main.auth import auth
 from starlette.responses import RedirectResponse
 import json
 
+from fastapi import APIRouter
+
+router = APIRouter()
 
 pattern = re.compile(r"\w{4,20}")  # 任意の4~20の英数字を示す正規表現
 pattern_pw = re.compile(r"\w{6,20}")  # 任意の6~20の英数字を示す正規表現
 pattern_mail = re.compile(
     r"^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$"
 )  # e-mailの正規表現
-
-app = FastAPI(
-    version="0.9 beta",
-)
 
 security = HTTPBasic()
 
@@ -41,17 +40,20 @@ templates = Jinja2Templates(directory="templates")
 jinja_env = templates.env
 
 
+@router.get("/")
 def index(request: Request):
 
     return templates.TemplateResponse("index.html", {"request": request})
 
 
+@router.get("/admin")
+@router.post("/admin")
 def admin(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
 
     username = auth(credentials)
 
     # ユーザとタスクを取得
-    conn = db.get_connection()
+    conn =get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
     task = read_task(cur, user[0])
@@ -84,6 +86,8 @@ def admin(request: Request, credentials: HTTPBasicCredentials = Depends(security
     )
 
 
+@router.get("/register")
+@router.post("/register")
 async def register(request: Request):
     if request.method == "GET":
         return templates.TemplateResponse(
@@ -102,7 +106,7 @@ async def register(request: Request):
 
         error = []
 
-        conn = db.get_connection()
+        conn =get_connection()
         cur = conn.cursor()
 
         # ユーザ-を取得
@@ -137,6 +141,8 @@ async def register(request: Request):
         )
 
 
+#@router.get("/todo/{username}/{year}/{month}/{day}")
+@router.get("/todo")
 def detail(
     request: Request,
     username,
@@ -154,7 +160,7 @@ def detail(
         return RedirectResponse("/")
 
     # ユーザを取得
-    conn = db.get_connection()
+    conn =get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
     # 該当の日付と一致するものだけのリストにする
@@ -177,12 +183,13 @@ def detail(
     )
 
 
+@router.post("/done")
 async def done(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
     # 認証OK？
     username = auth(credentials)
 
     # ユーザとタスクを取得
-    conn = db.get_connection()
+    conn =get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
     task = read_task(cur, user[0])
@@ -207,12 +214,13 @@ async def done(request: Request, credentials: HTTPBasicCredentials = Depends(sec
     return RedirectResponse("/admin")
 
 
+@router.post("/add")
 async def add(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
     # 認証
     username = auth(credentials)
 
     # ユーザーを取得
-    conn = db.get_connection()
+    conn =get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
 
@@ -243,6 +251,7 @@ async def add(request: Request, credentials: HTTPBasicCredentials = Depends(secu
     return RedirectResponse("/admin")
 
 
+@router.get("/delete")
 def delete(
     request: Request, t_id, credentials: HTTPBasicCredentials = Depends(security)
 ):
@@ -250,7 +259,7 @@ def delete(
     username = auth(credentials)
 
     # ユーザーとタスクを取得
-    conn = db.get_connection()
+    conn =get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
     task = read_task3(cur, t_id)
@@ -268,12 +277,13 @@ def delete(
     return RedirectResponse("/admin")
 
 
+@router.get("/get")
 def get(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
     # 認証
     username = auth(credentials)
 
     # ユーザーとタスクを取得
-    conn = db.get_connection()
+    conn =get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
     task = read_task(cur, user[0])
@@ -303,6 +313,7 @@ def get(request: Request, credentials: HTTPBasicCredentials = Depends(security))
     return json.loads(jsonStr)
 
 
+@router.post("/add_task")
 async def insert(
     request: Request,
     content: str = Form(...),
@@ -316,7 +327,7 @@ async def insert(
     username = auth(credentials)
 
     # ユーザーを取得
-    conn = db.get_connection()
+    conn =get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
 
