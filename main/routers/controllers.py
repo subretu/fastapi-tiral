@@ -41,14 +41,12 @@ jinja_env = templates.env
 
 @router.get("/")
 def index(request: Request):
-
     return templates.TemplateResponse("index.html", {"request": request})
 
 
 @router.get("/admin")
 @router.post("/admin")
 def admin(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
-
     username = auth(credentials)
 
     # ユーザとタスクを取得
