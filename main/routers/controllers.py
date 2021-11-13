@@ -297,7 +297,7 @@ def get(request: Request, credentials: HTTPBasicCredentials = Depends(security))
             "user_id": t[1],
             "content": t[2],
             "deadline": t[3].strftime("%Y-%m-%d %H:%M:%S"),
-            "published": t[4].strftime("%Y-%m-%d %H:%M:%S"),
+            "date": t[4].strftime("%Y-%m-%d %H:%M:%S"),
             "done": t[5],
         }
         task_json.append(param)
