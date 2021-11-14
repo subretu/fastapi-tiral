@@ -13,9 +13,6 @@ def test_get(cursor):
     auth = HTTPBasicAuth(username="xxxxx", password="yyyyy")
     response = client.get("/get", auth=auth)
 
-    print("以下、デバッグ")
-    print(response.json())
-
     # データ取得
     select_query = "select * from public.task_test where user_id = '1';"
     cursor.execute(select_query)

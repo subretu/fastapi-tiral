@@ -311,7 +311,7 @@ def get(request: Request, credentials: HTTPBasicCredentials = Depends(security))
 
 
 @router.post("/add_task")
-async def insert(
+def insert(
     request: Request,
     content: str = Form(...),
     deadline: str = Form(...),
@@ -345,7 +345,7 @@ async def insert(
             "id": new_task[0][0],
             "content": new_task[0][2],
             "deadline": new_task[0][3].strftime("%Y-%m-%d %H:%M:%S"),
-            "published": new_task[0][4].strftime("%Y-%m-%d %H:%M:%S"),
+            "date": new_task[0][4].strftime("%Y-%m-%d %H:%M:%S"),
             "done": new_task[0][5],
         }
         task_json.append(param)

@@ -1,4 +1,5 @@
 import pytest
+import asyncio
 import psycopg2
 import os
 
