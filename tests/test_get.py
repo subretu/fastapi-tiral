@@ -7,17 +7,17 @@ from requests.auth import HTTPBasicAuth
 security = HTTPBasic()
 
 
-def test_get(cursor):
-    auth = HTTPBasicAuth(username="xxxxx", password="yyyyy")
+def test_get(cursor, cursor2):
+    auth = HTTPBasicAuth(username="dddd", password="dddd")
     response = cursor.get("/get", auth=auth)
 
     print("以下、デバッグ")
     print(response.json())
 
     # データ取得
-    select_query = "select * from public.task_test where user_id = '1';"
-    cursor.execute(select_query)
-    rows = cursor.fetchall()
+    select_query = "select * from public.task where user_id = '1';"
+    cursor2.execute(select_query)
+    rows = cursor2.fetchall()
 
     assert response.status_code == 200
     assert response.json() == [

@@ -8,7 +8,7 @@ security = HTTPBasic()
 
 
 def test_insert(cursor):
-    auth = HTTPBasicAuth(username="xxxxxx", password="yyyyyy")
+    auth = HTTPBasicAuth(username="aaaa", password="aaaa")
     response = cursor.post(
         "/add_task",
         auth=auth,
