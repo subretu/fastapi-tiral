@@ -6,12 +6,10 @@ from requests.auth import HTTPBasicAuth
 
 security = HTTPBasic()
 
-client = TestClient(app)
 
-
-def test_insert():
+def test_insert(cursor):
     auth = HTTPBasicAuth(username="xxxxxx", password="yyyyyy")
-    response = client.post(
+    response = cursor.post(
         "/add_task",
         auth=auth,
         data={

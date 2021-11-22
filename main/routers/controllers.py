@@ -1,5 +1,6 @@
 from fastapi import Depends, Form
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from requests.sessions import session
 from starlette.templating import Jinja2Templates
 from starlette.requests import Request
 from main.model import (
@@ -275,12 +276,15 @@ def delete(
 
 
 @router.get("/get")
-def get(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
+def get(
+    request: Request,
+    credentials: HTTPBasicCredentials = Depends(security),
+    conn: session = Depends(get_connection),
+):
     # 認証
     username = auth(credentials)
 
     # ユーザーとタスクを取得
-    conn = get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
     task = read_task(cur, user[0])
@@ -316,6 +320,7 @@ async def insert(
     content: str = Form(...),
     deadline: str = Form(...),
     credentials: HTTPBasicCredentials = Depends(security),
+    conn: session = Depends(get_connection),
 ):
     """
     タスクを追加してJSONで新規タスクを返す
@@ -324,7 +329,6 @@ async def insert(
     username = auth(credentials)
 
     # ユーザーを取得
-    conn = get_connection()
     cur = conn.cursor()
     user = read_user(cur, username)
 
